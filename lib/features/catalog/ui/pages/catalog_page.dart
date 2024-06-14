@@ -24,6 +24,8 @@ class _CatalogPageState extends State<CatalogPage> {
   final PagingController<int, Product> _pagingController =
       PagingController(firstPageKey: 1);
 
+  final List<Product> _sortedProducts = [];
+
   String? _query;
   final _queryController = TextEditingController();
   final _queryFocusNode = FocusNode();
@@ -43,8 +45,12 @@ class _CatalogPageState extends State<CatalogPage> {
           .then(
             (res) {
               if (res.lastPage == res.currentPage) {
+                _sortedProducts.addAll(res.data);
+                _sortedProducts.sort((a, b) => a.name.compareTo(b.name));
                 _pagingController.appendLastPage(res.data);
               } else {
+                _sortedProducts.addAll(res.data);
+                _sortedProducts.sort((a, b) => a.name.compareTo(b.name));
                 _pagingController.appendPage(
                   res.data,
                   res.currentPage + 1,
@@ -166,12 +172,15 @@ class _CatalogPageState extends State<CatalogPage> {
               child: PagedListView<int, Product>(
                 pagingController: _pagingController,
                 builderDelegate: PagedChildBuilderDelegate<Product>(
-                  itemBuilder: (_, product, __) => Visibility(
-                    visible: product.name.toLowerCase().contains(
-                          _queryController.text.toLowerCase(),
-                        ),
-                    child: ProductCard(product: product),
-                  ),
+                  itemBuilder: (_, __, index) {
+                    final product = _sortedProducts[index];
+                    return Visibility(
+                      visible: product.name.toLowerCase().contains(
+                            _queryController.text.toLowerCase(),
+                          ),
+                      child: ProductCard(product: product),
+                    );
+                  },
                 ),
               ),
             ),
